@@ -10,51 +10,101 @@ let currentTimeout = null;
  */
 export function generateMIDI(contributions) {
     const midi = new Midi();
-    const track = midi.addTrack();
+    const melodyTrack = midi.addTrack();
+    const bassTrack = midi.addTrack();
+    const padTrack = midi.addTrack();
 
     // Escalas musicales para mapear contribuciones
     const scales = {
-        minor: [60, 62, 63, 65, 67, 68, 70, 72], // C minor
-        major: [60, 62, 64, 65, 67, 69, 71, 72], // C major
-        pentatonic: [60, 62, 65, 67, 69, 72]     // C pentatonic
+        melody: [60, 62, 64, 65, 67, 69, 71, 72, 74, 76], // C major extendida
+        bass: [36, 38, 40, 41, 43, 45, 47, 48], // C major bajo
+        chords: [
+            [60, 64, 67], // C major
+            [62, 65, 69], // Dm
+            [64, 67, 71], // Em
+            [65, 69, 72], // F major
+            [67, 71, 74], // G major
+            [69, 72, 76]  // Am
+        ]
     };
 
-    const scale = scales.pentatonic;
     let time = 0;
-    const noteDuration = 0.25; // Duración de cada nota en beats
+    const noteDuration = 0.15; // Duración más corta para más fluidez
+    let currentChordIndex = 0;
 
     contributions.forEach((day, index) => {
+        // SIEMPRE generar sonido, nunca silencio
+        
+        // 1. MELODÍA PRINCIPAL - varía según contribuciones
+        let noteIndex;
+        let velocity;
+        
         if (day.count > 0) {
-            // Mapear contribuciones a notas musicales
-            const noteIndex = Math.min(day.count, scale.length - 1);
-            const note = scale[noteIndex];
-            
-            // Velocidad basada en cantidad de contribuciones
-            const velocity = Math.min(0.3 + (day.count / 20) * 0.7, 1);
-            
-            track.addNote({
-                midi: note,
-                time: time,
-                duration: noteDuration,
-                velocity: velocity
-            });
-
-            // Agregar armonía para días con muchas contribuciones
-            if (day.count > 5) {
-                const harmonyNote = scale[Math.min(noteIndex + 2, scale.length - 1)];
-                track.addNote({
-                    midi: harmonyNote,
-                    time: time,
-                    duration: noteDuration,
-                    velocity: velocity * 0.6
-                });
-            }
-
-            time += noteDuration;
+            // Con contribuciones: notas más altas y fuertes
+            noteIndex = Math.min(3 + Math.floor(day.count / 2), scales.melody.length - 1);
+            velocity = Math.min(0.5 + (day.count / 15) * 0.5, 1);
         } else {
-            // Silencio para días sin contribuciones
-            time += noteDuration * 0.5;
+            // Sin contribuciones: notas más bajas y suaves (pero siempre presentes)
+            noteIndex = Math.floor(Math.random() * 3); // Notas bajas
+            velocity = 0.3;
         }
+        
+        const note = scales.melody[noteIndex];
+        
+        melodyTrack.addNote({
+            midi: note,
+            time: time,
+            duration: noteDuration * 1.5,
+            velocity: velocity
+        });
+
+        // 2. ARMONÍA - siempre presente
+        const harmonyNote = scales.melody[Math.min(noteIndex + 2, scales.melody.length - 1)];
+        melodyTrack.addNote({
+            midi: harmonyNote,
+            time: time,
+            duration: noteDuration * 1.5,
+            velocity: velocity * 0.5
+        });
+
+        // 3. BAJO - pulso constante cada 4 notas
+        if (index % 4 === 0) {
+            const bassNote = scales.bass[Math.floor(index / 4) % scales.bass.length];
+            bassTrack.addNote({
+                midi: bassNote,
+                time: time,
+                duration: noteDuration * 4,
+                velocity: 0.6
+            });
+        }
+
+        // 4. PAD/ACORDES - cambia cada 8 notas para crear progresión
+        if (index % 8 === 0) {
+            const chord = scales.chords[currentChordIndex % scales.chords.length];
+            chord.forEach(chordNote => {
+                padTrack.addNote({
+                    midi: chordNote,
+                    time: time,
+                    duration: noteDuration * 8,
+                    velocity: 0.3
+                });
+            });
+            currentChordIndex++;
+        }
+
+        // 5. VARIACIÓN EXTRA para días con muchas contribuciones
+        if (day.count > 10) {
+            // Agregar nota de acento
+            const accentNote = scales.melody[Math.min(noteIndex + 4, scales.melody.length - 1)];
+            melodyTrack.addNote({
+                midi: accentNote,
+                time: time + noteDuration * 0.5,
+                duration: noteDuration * 0.5,
+                velocity: velocity * 0.8
+            });
+        }
+
+        time += noteDuration;
     });
 
     return midi;
@@ -68,23 +118,30 @@ function midiToFrequency(midi) {
 }
 
 /**
- * Reproduce una nota usando Web Audio API
+ * Reproduce una nota usando Web Audio API con diferentes timbres
  */
-function playNote(frequency, duration, velocity, startTime) {
+function playNote(frequency, duration, velocity, startTime, waveType = 'sine') {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
+    const filter = audioContext.createBiquadFilter();
 
-    oscillator.connect(gainNode);
+    oscillator.connect(filter);
+    filter.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    oscillator.type = 'sine';
+    oscillator.type = waveType;
     oscillator.frequency.value = frequency;
+    
+    // Filtro para suavizar el sonido
+    filter.type = 'lowpass';
+    filter.frequency.value = 2000;
+    filter.Q.value = 1;
 
-    // Envelope ADSR simple
+    // Envelope ADSR
     const now = audioContext.currentTime + startTime;
     gainNode.gain.setValueAtTime(0, now);
     gainNode.gain.linearRampToValueAtTime(velocity * 0.3, now + 0.01);
@@ -96,7 +153,7 @@ function playNote(frequency, duration, velocity, startTime) {
 }
 
 /**
- * Reproduce el MIDI generado
+ * Reproduce el MIDI generado con múltiples tracks
  */
 export function playMIDI(midi, onProgress, onComplete) {
     if (isPlaying) {
@@ -108,32 +165,51 @@ export function playMIDI(midi, onProgress, onComplete) {
     }
 
     isPlaying = true;
-    const track = midi.tracks[0];
     const tempo = 120; // BPM
     const beatDuration = 60 / tempo; // segundos por beat
 
-    let currentTime = 0;
-    let noteIndex = 0;
+    // Configuración de timbres por track
+    const trackConfigs = [
+        { waveType: 'sine', name: 'melody' },      // Melodía - suave
+        { waveType: 'triangle', name: 'bass' },    // Bajo - cálido
+        { waveType: 'sine', name: 'pad' }          // Pad - ambiente
+    ];
 
-    track.notes.forEach((note, index) => {
-        const startTime = note.time * beatDuration;
-        const duration = note.duration * beatDuration;
-        const frequency = midiToFrequency(note.midi);
+    let totalNotes = 0;
+    let playedNotes = 0;
 
-        setTimeout(() => {
-            if (isPlaying) {
-                playNote(frequency, duration, note.velocity, 0);
-                if (onProgress) {
-                    onProgress((index + 1) / track.notes.length);
+    // Contar total de notas
+    midi.tracks.forEach(track => {
+        totalNotes += track.notes.length;
+    });
+
+    // Reproducir cada track
+    midi.tracks.forEach((track, trackIndex) => {
+        const config = trackConfigs[trackIndex] || trackConfigs[0];
+        
+        track.notes.forEach((note, noteIndex) => {
+            const startTime = note.time * beatDuration;
+            const duration = note.duration * beatDuration;
+            const frequency = midiToFrequency(note.midi);
+
+            setTimeout(() => {
+                if (isPlaying) {
+                    playNote(frequency, duration, note.velocity, 0, config.waveType);
+                    playedNotes++;
+                    
+                    if (onProgress) {
+                        onProgress(playedNotes / totalNotes);
+                    }
+                    
+                    if (playedNotes === totalNotes && onComplete) {
+                        setTimeout(() => {
+                            isPlaying = false;
+                            onComplete();
+                        }, duration * 1000);
+                    }
                 }
-                if (index === track.notes.length - 1 && onComplete) {
-                    setTimeout(() => {
-                        isPlaying = false;
-                        onComplete();
-                    }, duration * 1000);
-                }
-            }
-        }, startTime * 1000);
+            }, startTime * 1000);
+        });
     });
 }
 
@@ -164,49 +240,68 @@ export function downloadMIDI(midi, username) {
 }
 
 /**
- * Genera y descarga el audio como archivo WAV
+ * Genera y descarga el audio como archivo WAV con múltiples tracks
  */
 export async function downloadAudio(midi, username) {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    const track = midi.tracks[0];
     const tempo = 120; // BPM
     const beatDuration = 60 / tempo;
     
-    // Calcular duración total
-    const lastNote = track.notes[track.notes.length - 1];
-    const totalDuration = (lastNote.time + lastNote.duration) * beatDuration;
+    // Calcular duración total de todos los tracks
+    let maxDuration = 0;
+    midi.tracks.forEach(track => {
+        if (track.notes.length > 0) {
+            const lastNote = track.notes[track.notes.length - 1];
+            const trackDuration = (lastNote.time + lastNote.duration) * beatDuration;
+            maxDuration = Math.max(maxDuration, trackDuration);
+        }
+    });
     
     // Crear un buffer offline para renderizar el audio
     const sampleRate = 44100;
-    const offlineContext = new OfflineAudioContext(2, sampleRate * totalDuration, sampleRate);
+    const offlineContext = new OfflineAudioContext(2, sampleRate * maxDuration, sampleRate);
     
-    // Renderizar todas las notas
-    track.notes.forEach(note => {
-        const startTime = note.time * beatDuration;
-        const duration = note.duration * beatDuration;
-        const frequency = midiToFrequency(note.midi);
+    // Configuración de timbres por track
+    const trackConfigs = [
+        { waveType: 'sine', name: 'melody' },
+        { waveType: 'triangle', name: 'bass' },
+        { waveType: 'sine', name: 'pad' }
+    ];
+    
+    // Renderizar todas las notas de todos los tracks
+    midi.tracks.forEach((track, trackIndex) => {
+        const config = trackConfigs[trackIndex] || trackConfigs[0];
         
-        // Crear oscilador
-        const oscillator = offlineContext.createOscillator();
-        const gainNode = offlineContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(offlineContext.destination);
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.value = frequency;
-        
-        // Envelope
-        gainNode.gain.setValueAtTime(0, startTime);
-        gainNode.gain.linearRampToValueAtTime(note.velocity * 0.3, startTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(note.velocity * 0.1, startTime + duration - 0.05);
-        gainNode.gain.linearRampToValueAtTime(0.001, startTime + duration);
-        
-        oscillator.start(startTime);
-        oscillator.stop(startTime + duration);
+        track.notes.forEach(note => {
+            const startTime = note.time * beatDuration;
+            const duration = note.duration * beatDuration;
+            const frequency = midiToFrequency(note.midi);
+            
+            // Crear oscilador
+            const oscillator = offlineContext.createOscillator();
+            const gainNode = offlineContext.createGain();
+            const filter = offlineContext.createBiquadFilter();
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(offlineContext.destination);
+            
+            oscillator.type = config.waveType;
+            oscillator.frequency.value = frequency;
+            
+            // Filtro
+            filter.type = 'lowpass';
+            filter.frequency.value = 2000;
+            filter.Q.value = 1;
+            
+            // Envelope
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(note.velocity * 0.3, startTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(note.velocity * 0.1, startTime + duration - 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.001, startTime + duration);
+            
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        });
     });
     
     // Renderizar el audio
