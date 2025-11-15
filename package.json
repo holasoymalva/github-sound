@@ -1,0 +1,17 @@
+{
+  "name": "github-music-generator",
+  "version": "1.0.0",
+  "description": "Genera música MIDI basada en contribuciones de GitHub",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

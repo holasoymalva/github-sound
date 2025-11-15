@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Music Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 GitHub Music Generator</h1>
+        <p class="subtitle">Convierte tus contribuciones de GitHub en música MIDI</p>
+        
+        <div class="input-section">
+            <input 
+                type="text" 
+                id="username" 
+                placeholder="Ingresa un usuario de GitHub"
+                autocomplete="off"
+            />
+            <button id="generate">Generar Música</button>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Obteniendo contribuciones...</p>
+        </div>
+
+        <div id="error" class="error hidden"></div>
+
+        <div id="results" class="results hidden">
+            <div class="stats">
+                <h3>Estadísticas</h3>
+                <p>Total de contribuciones: <span id="totalContributions">0</span></p>
+                <p>Días activos: <span id="activeDays">0</span></p>
+            </div>
+
+            <div class="visualization">
+                <canvas id="contributionsCanvas"></canvas>
+            </div>
+
+            <div class="controls">
+                <button id="playPreview">▶️ Reproducir</button>
+                <button id="download">⬇️ Descargar Audio</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/app.js"></script>
+</body>
+</html>
