@@ -1,37 +1,89 @@
-# 🎵 GitHub Music Generator
+# 🎵 GitHub Sound
 
-Aplicación web que convierte las contribuciones de GitHub del último año en composiciones musicales MIDI.
+Convierte tus contribuciones de GitHub en música. Una experiencia audiovisual única que transforma tu actividad de código en composiciones musicales.
 
-## 🚀 Instalación
+## 🌐 Demo
+
+**[Ver Demo en Vivo](https://holasoymalva.github.io/github-sound/)**
+
+## ✨ Características
+
+- 🎼 **Generación musical en tiempo real** basada en tus contribuciones
+- 🎨 **Fondo animado con ASCII art** que crea ondulaciones de colores
+- 🎵 **Múltiples capas de audio**: melodía, armonía, bajo y acordes
+- 📊 **Visualización de contribuciones** estilo GitHub
+- 💾 **Descarga el audio generado** en formato WAV
+- 🎹 **Reproducción directa** en el navegador con Web Audio API
+
+## 🚀 Instalación Local
 
 ```bash
+# Clonar el repositorio
+git clone https://github.com/holasoymalva/github-sound.git
+cd github-sound
+
+# Instalar dependencias
 npm install
-```
 
-## 💻 Uso
-
-```bash
+# Ejecutar en desarrollo
 npm run dev
 ```
 
 Abre tu navegador en `http://localhost:5173`
 
-## ⚠️ Nota Importante
+## 📦 Build para Producción
 
-Esta app usa la API pública de GitHub Contributions (https://github-contributions-api.jogruber.de) que obtiene los datos reales del gráfico de contribuciones de GitHub sin necesidad de autenticación.
+```bash
+npm run build
+```
 
-Los datos son exactamente los mismos que ves en tu perfil de GitHub.
+Los archivos se generarán en la carpeta `dist/`
 
 ## 🎼 Cómo Funciona
 
-- Cada día con contribuciones genera una nota musical
-- Más contribuciones = notas más altas y más intensas
-- Días con muchas contribuciones agregan armonías
-- Días sin contribuciones crean silencios
+La aplicación convierte tus contribuciones de GitHub en música usando las siguientes reglas:
+
+- **Melodía Principal**: Varía según la cantidad de contribuciones
+  - Más contribuciones = notas más altas y fuertes
+  - Sin contribuciones = notas bajas y suaves
+- **Armonía**: Siempre acompaña a la melodía
+- **Bajo**: Pulso constante cada 4 notas para dar ritmo
+- **Acordes**: Progresión armónica que cambia cada 8 notas
+- **Variaciones**: Días con muchas contribuciones (>10) agregan notas de acento
+
+**Nunca hay silencio** - la música fluye continuamente, creando una experiencia inmersiva.
 
 ## 🛠️ Tecnologías
 
-- Vanilla JavaScript/TypeScript
-- Vite
-- @tonejs/midi
-- GitHub API
+- **Vite** - Build tool y dev server
+- **Vanilla JavaScript** - Sin frameworks, puro JS
+- **@tonejs/midi** - Generación de archivos MIDI
+- **Web Audio API** - Síntesis y reproducción de audio
+- **Canvas API** - Animaciones de fondo con ASCII
+- **GitHub Contributions API** - Datos de contribuciones
+
+## 📝 API Utilizada
+
+Esta app usa la [GitHub Contributions API](https://github-contributions-api.jogruber.de) que obtiene los datos reales del gráfico de contribuciones sin necesidad de autenticación.
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas! Si tienes ideas para mejorar el proyecto:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+MIT License - siéntete libre de usar este proyecto como quieras.
+
+## 👨‍💻 Autor
+
+**[@holasoymalva](https://github.com/holasoymalva)**
+
+---
+
+⭐ Si te gustó este proyecto, dale una estrella en GitHub!

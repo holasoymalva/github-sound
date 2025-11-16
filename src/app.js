@@ -1,5 +1,9 @@
 import { getGitHubContributions } from './github.js';
 import { generateMIDI, downloadAudio, visualizeContributions, playMIDI, stopMIDI } from './midi.js';
+import { initBackground } from './background.js';
+
+// Inicializar fondo animado
+initBackground();
 
 // Elementos del DOM
 const usernameInput = document.getElementById('username');
