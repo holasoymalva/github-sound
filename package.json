@@ -1,7 +1,7 @@
 {
-  "name": "github-music-generator",
+  "name": "github-sound",
   "version": "1.0.0",
-  "description": "Genera música MIDI basada en contribuciones de GitHub",
+  "description": "Convierte tus contribuciones de GitHub en música",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,5 +13,9 @@
   },
   "devDependencies": {
     "vite": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holasoymalva/github-sound.git"
   }
 }
